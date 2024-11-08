@@ -58,3 +58,4 @@ This project emulates a simplified CPU in C++. Over 10 weeks, we’ll build esse
 - Create a demo session to showcase CPU operations and emulator features.
 
 
+DOC LINK:https://docs.google.com/document/d/17jAEtoRiF4BH0hUGUXyOY22gvt6shxvs4sEIeUxVPFI/edit?usp=sharing
