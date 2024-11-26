@@ -87,7 +87,7 @@ int main() {
     // Display machine code
     cout << "Machine code: ";
     for (uint8_t byte : machineCode) {
-        cout << hex << static_cast<int>(byte) << " ";
+        cout<< hex << static_cast<int>(byte) << " ";
     }
     cout << endl;
 
