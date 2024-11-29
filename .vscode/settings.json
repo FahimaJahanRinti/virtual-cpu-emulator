@@ -3,6 +3,7 @@
     "*.scss": "scss",
     "iostream": "cpp",
     "vector": "cpp",
-    "sstream": "cpp"
+    "sstream": "cpp",
+    "bitset": "cpp"
   }
 }
