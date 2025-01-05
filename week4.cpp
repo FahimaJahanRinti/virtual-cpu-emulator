@@ -218,8 +218,10 @@ public:
             }
         }
     }
-
-    void displayRegisters() { registers.display(); }
+ 
+    void displayRegisters() { 
+        registers.display();
+         }
 };
 
 // Main Function
