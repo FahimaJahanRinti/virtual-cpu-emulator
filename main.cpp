@@ -15,17 +15,15 @@ unordered_map<string, uint8_t> opcodeMap = {
     {"SUB", 0x03},
     {"STORE", 0x04},
     {"NOP", 0x05},
-    {"AND", 0x06},
-    {"OR", 0x07},
-    {"XOR", 0x08},
-    {"READ", 0x09},   // READ instruction (keyboard)
-    {"WRITE", 0x0A}   // WRITE instruction (display)
+    {"AND", 0x06},  // New logical operation
+    {"OR", 0x07},   // New logical operation
+    {"XOR", 0x08}   // New logical operation
 };
 
 // Map for expected operand count per instruction
 unordered_map<string, int> instructionOperands = {
     {"LOAD", 2}, {"ADD", 2}, {"SUB", 2}, {"STORE", 2}, {"NOP", 0},
-    {"AND", 2}, {"OR", 2}, {"XOR", 2}, {"READ", 1}, {"WRITE", 1}
+    {"AND", 2}, {"OR", 2}, {"XOR", 2}  // New logical operations
 };
 
 // Tokenize function
@@ -71,39 +69,23 @@ vector<uint8_t> assemble(const vector<string>& assembly) {
     return machineCode;
 }
 
-// I/O Device Classes
-class InputDevice {
-public:
-    uint8_t read() {
-        uint8_t input;
-        cout << "Enter a value (0-255): ";
-        cin >> input;
-        return input;
-    }
-};
-
-class OutputDevice {
-public:
-    void write(uint8_t value) {
-        cout << "Output: " << (int)value << endl;
-    }
-};
-
 // ALU Class
 class ALU {
 public:
     uint8_t add(uint8_t a, uint8_t b) { return (a + b) & 0xFF; }
     uint8_t sub(uint8_t a, uint8_t b) { return (a - b) & 0xFF; }
-    uint8_t and_op(uint8_t a, uint8_t b) { return a & b; }
-    uint8_t or_op(uint8_t a, uint8_t b) { return a | b; }
-    uint8_t xor_op(uint8_t a, uint8_t b) { return a ^ b; }
     uint8_t nop() { return 0; }
+    
+    // Logical operations
+    uint8_t andOp(uint8_t a, uint8_t b) { return a & b; }
+    uint8_t orOp(uint8_t a, uint8_t b) { return a | b; }
+    uint8_t xorOp(uint8_t a, uint8_t b) { return a ^ b; }
 };
 
 // Registers Class
 class Registers {
 private:
-    uint8_t reg[4]{}; // Initialize registers to zero
+    uint8_t reg[4]{};
 
 public:
     void write(int index, uint8_t value) {
@@ -147,38 +129,6 @@ public:
     uint8_t get() const { return instruction; }
 };
 
-// Memory Class
-class Memory {
-private:
-    uint8_t mem[256]{};  // Simulate 256 bytes of memory
-
-public:
-    void write(uint8_t address, uint8_t value) {
-        if (address < 256) {
-            mem[address] = value;
-        } else {
-            cout << "Error: Invalid memory address " << (int)address << endl;
-        }
-    }
-
-    uint8_t read(uint8_t address) {
-        if (address < 256) {
-            return mem[address];
-        } else {
-            cout << "Error: Invalid memory address " << (int)address << endl;
-            return 0;
-        }
-    }
-
-    void displayMemory() {
-        for (int i = 0; i < 256; ++i) {
-            if (mem[i] != 0) {
-                cout << "Memory[" << i << "]: " << (int)mem[i] << endl;
-            }
-        }
-    }
-};
-
 // CPU Class
 class CPU {
 private:
@@ -186,13 +136,11 @@ private:
     Registers registers;
     ProgramCounter pc;
     InstructionRegister ir;
-    Memory memory;
-    InputDevice inputDevice;
-    OutputDevice outputDevice;
 
     void fetchInstruction(const vector<uint8_t>& machineCode) {
         if (pc.get() < machineCode.size()) {
             ir.load(machineCode[pc.get()]);
+            pc.increment();
         } else {
             cout << "Error: Program counter out of bounds!" << endl;
         }
@@ -206,111 +154,85 @@ public:
 
             switch (opcode) {
                 case 0x01: { // LOAD
-                    uint8_t regIndex = machineCode[pc.get() + 1];
-                    uint8_t operand = machineCode[pc.get() + 2];
+                    uint8_t regIndex = machineCode[pc.get()];
+                    uint8_t operand = machineCode[pc.get() + 1];
+                    pc.increment();
+                    pc.increment();
                     registers.write(regIndex, operand);
-                    pc.increment();
-                    pc.increment();
-                    pc.increment();
                     break;
                 }
                 case 0x02: { // ADD
-                    uint8_t regIndex = machineCode[pc.get() + 1];
-                    uint8_t operand = machineCode[pc.get() + 2];
+                    uint8_t regIndex = machineCode[pc.get()];
+                    uint8_t operand = machineCode[pc.get() + 1];
+                    pc.increment();
+                    pc.increment();
                     registers.write(regIndex, alu.add(registers.read(regIndex), operand));
-                    pc.increment();
-                    pc.increment();
-                    pc.increment();
                     break;
                 }
                 case 0x03: { // SUB
-                    uint8_t regIndex = machineCode[pc.get() + 1];
-                    uint8_t operand = machineCode[pc.get() + 2];
+                    uint8_t regIndex = machineCode[pc.get()];
+                    uint8_t operand = machineCode[pc.get() + 1];
+                    pc.increment();
+                    pc.increment();
                     registers.write(regIndex, alu.sub(registers.read(regIndex), operand));
-                    pc.increment();
-                    pc.increment();
-                    pc.increment();
                     break;
                 }
                 case 0x04: { // STORE
-                    uint8_t regIndex = machineCode[pc.get() + 1];
-                    uint8_t memoryAddress = machineCode[pc.get() + 2];
-                    memory.write(memoryAddress, registers.read(regIndex));
+                    uint8_t regIndex = machineCode[pc.get()];
+                    uint8_t addr = machineCode[pc.get() + 1];
                     pc.increment();
                     pc.increment();
-                    pc.increment();
+                    cout << "STORE R" << (int)regIndex << " value: " << (int)registers.read(regIndex) << " at address " << (int)addr << endl;
                     break;
                 }
-                case 0x05: { // NOP
-                    pc.increment();
+                case 0x05: // NOP
+                    alu.nop();
                     break;
-                }
                 case 0x06: { // AND
-                    uint8_t regIndex = machineCode[pc.get() + 1];
-                    uint8_t operand = machineCode[pc.get() + 2];
-                    registers.write(regIndex, alu.and_op(registers.read(regIndex), operand));
+                    uint8_t regIndex = machineCode[pc.get()];
+                    uint8_t operand = machineCode[pc.get() + 1];
                     pc.increment();
                     pc.increment();
-                    pc.increment();
+                    registers.write(regIndex, alu.andOp(registers.read(regIndex), operand));
                     break;
                 }
                 case 0x07: { // OR
-                    uint8_t regIndex = machineCode[pc.get() + 1];
-                    uint8_t operand = machineCode[pc.get() + 2];
-                    registers.write(regIndex, alu.or_op(registers.read(regIndex), operand));
+                    uint8_t regIndex = machineCode[pc.get()];
+                    uint8_t operand = machineCode[pc.get() + 1];
                     pc.increment();
                     pc.increment();
-                    pc.increment();
+                    registers.write(regIndex, alu.orOp(registers.read(regIndex), operand));
                     break;
                 }
                 case 0x08: { // XOR
-                    uint8_t regIndex = machineCode[pc.get() + 1];
-                    uint8_t operand = machineCode[pc.get() + 2];
-                    uint8_t result = alu.xor_op(registers.read(regIndex), operand);
-                    registers.write(regIndex, result);
+                    uint8_t regIndex = machineCode[pc.get()];
+                    uint8_t operand = machineCode[pc.get() + 1];
                     pc.increment();
                     pc.increment();
-                    pc.increment();
-                    break;
-                }
-                case 0x09: { // READ (keyboard)
-                    uint8_t regIndex = machineCode[pc.get() + 1];
-                    uint8_t input = inputDevice.read();
-                    registers.write(regIndex, input);
-                    pc.increment();
-                    pc.increment();
-                    break;
-                }
-                case 0x0A: { // WRITE (display)
-                    uint8_t regIndex = machineCode[pc.get() + 1];
-                    uint8_t value = registers.read(regIndex);
-                    outputDevice.write(value);
-                    pc.increment();
-                    pc.increment();
+                    registers.write(regIndex, alu.xorOp(registers.read(regIndex), operand));
                     break;
                 }
                 default:
-                    cout << "Error: Invalid opcode " << (int)opcode << endl;
-                    return;
+                    cout << "Unknown opcode: " << (int)opcode << endl;
+                    break;
             }
         }
     }
-
-    void displayState() {
+ 
+    void displayRegisters() { 
         registers.display();
-        memory.displayMemory();
-    }
+         }
 };
 
+// Main Function
 int main() {
     vector<string> assembly = {
-        "LOAD 0 15",   // Load 15 into R0
-        "LOAD 1 8",    // Load 8 into R1
-        "ADD 0 1",     // ADD 1 to R0, store result in R0
-        "WRITE 0",     // Output R0 (Display)
-        "READ 1",      // Input from keyboard to R1
-        "STORE 1 100", // Store R1 at memory address 100
-        "NOP"          // No operation
+        "LOAD 0 15         # Load 15 (0b1111) into R0",
+        "LOAD 1 8          # Load 8 (0b1000) into R1",
+        "AND 0 1           # Perform R0 AND R1",
+        "OR 0 1            # Perform R0 OR R1",
+        "XOR 0 1           # Perform R0 XOR R1",
+        "NOP               # No operation",
     };
 
     vector<uint8_t> machineCode = assemble(assembly);
@@ -332,7 +254,9 @@ int main() {
 
     CPU cpu;
     cpu.execute(machineCode);
-    cpu.displayState();
+
+    cout << "\nRegisters after execution:\n";
+    cpu.displayRegisters();
 
     return 0;
 }
