@@ -13,6 +13,8 @@ Input/Output operations.
 1.Example Assembly Code Execution:
 The main function demonstrates assembling and running an assembly program.
 
+
+
 int main() {
 vector<string> assembly = {
 "LOAD 0 15",
@@ -25,13 +27,20 @@ CPU cpu;
 cpu.execute(machineCode);
 return 0;
 }
+
+
+
 Purpose:
 1.Loads values into registers.
 2.Performs an addition operation.
 3.Outputs the result using the WRITE instruction.
 
+
+
 2.Tokenization:
 This function tokenizes each line of assembly code into individual components.
+
+
 
 vector<string> tokenize(const string& line) {
 vector<string> tokens;
@@ -42,12 +51,21 @@ tokens.push_back(token);
 }
 return tokens;
 }
+
+
+
 Purpose:
 1.Splits an assembly instruction into separate words.
 2.Helps in parsing and identifying the instruction and its operands.
 
+
+
+
 3.Opcode and Operand Mapping:
 Defines the instruction set architecture (ISA) by mapping mnemonics to opcodes and tracking operand counts.
+
+
+
 
 unordered_map<string, uint8_t> opcodeMap = {
 {"LOAD", 0x01}, {"ADD", 0x02}, {"SUB", 0x03},
@@ -57,12 +75,19 @@ unordered_map<string, uint8_t> opcodeMap = {
 {"RET", 0x0D}, {"BEQ", 0x0E}, {"BNE", 0x0F},
 {"INT", 0x10}
 };
+
+
+
 Purpose:
 1.Maps instruction names to their corresponding opcode values.
 2.Used for assembling code into machine code.
 
+
+
 4.Assembler: Converts Assembly to Machine Code
 The assembleBinary function translates assembly instructions into binary machine code.
+
+
 
 vector<bitset<8>> assembleBinary(const vector<string>& assembly) {
 vector<bitset<8>> machineCodeBinary;
@@ -83,12 +108,22 @@ machineCodeBinary.push_back(bitset<8>(stoi(tokens[i])));
 return machineCodeBinary;
 }
 
+
+
+
+
 Purpose:
 1.Converts each instruction into its binary representation.
 2.Ensures proper operand count and handles errors.
 
+
+
 5.Memory Management:
 Defines a Memory class to simulate RAM with read/write operations.
+
+
+
+
 class Memory {
 private:
 bitset<8> mem[256];
@@ -100,12 +135,22 @@ bitset<8> read(uint8_t address) {
 return mem[address];
 }
 };
+
+
+
+
 Purpose:
 1.Stores program instructions and data.
 2.Provides a simple interface for reading and writing memory values.
 
+
+
+
 6.Register Management:
 Defines a Register class to store 8-bit values.
+
+
+
 
 class Register {
 private:
@@ -114,13 +159,25 @@ public:
 void load(const bitset<8>& val) { value = val; }
 bitset<8> get() const { return value; }
 };
+
+
+
+
+
 Purpose:
 
 1.Holds values for CPU operations.
 2.Provides methods for loading and retrieving values.
 
+
+
+
 7.CPU Execution:
 Handles the instruction execution cycle (fetch, decode, execute).
+
+
+
+
 
 class CPU {
 private:
@@ -285,6 +342,11 @@ cout << "Memory State: \n";
 memory.displayMemory();
 }
 };
+
+
+
+
+
 
 Purpose:
 1.Simulates the CPU’s fetch-decode-execute cycle.
