@@ -1,46 +1,47 @@
 #include <iostream>
-#include <string>
 #include <vector>
 #include <unordered_map>
+#include <bitset>
+#include <string>
 #include <sstream>
 #include <cstdint>
-#include <bitset>
+#include <stack>
+#include <chrono>
 
 using namespace std;
+using namespace chrono;
 
-// Opcode map for assembly instructions
-unordered_map<string, uint8_t> opcodeMap = {
-    {"LOAD", 0x01},
-    {"ADD", 0x02},
-    {"SUB", 0x03},
-    {"STORE", 0x04},
-    {"NOP", 0x05},
-    {"AND", 0x06},  // New logical operation
-    {"OR", 0x07},   // New logical operation
-    {"XOR", 0x08}   // New logical operation
-};
-
-// Map for expected operand count per instruction
-unordered_map<string, int> instructionOperands = {
-    {"LOAD", 2}, {"ADD", 2}, {"SUB", 2}, {"STORE", 2}, {"NOP", 0},
-    {"AND", 2}, {"OR", 2}, {"XOR", 2}  // New logical operations
-};
-
-// Tokenize function
+// Tokenize helper function
 vector<string> tokenize(const string& line) {
     vector<string> tokens;
-    string trimmedLine = line.substr(0, line.find('#'));  // Ignore comments
-    istringstream stream(trimmedLine);
+    stringstream ss(line);
     string token;
-    while (stream >> token) {
+    while (ss >> token) {
         tokens.push_back(token);
     }
     return tokens;
 }
 
-// Assemble function
-vector<uint8_t> assemble(const vector<string>& assembly) {
-    vector<uint8_t> machineCode;
+// Opcode map and operand count
+unordered_map<string, uint8_t> opcodeMap = {
+    {"LOAD", 0x01}, {"ADD", 0x02}, {"SUB", 0x03},
+    {"STORE", 0x04}, {"NOP", 0x00}, {"AND", 0x06},
+    {"OR", 0x07}, {"XOR", 0x08}, {"READ", 0x09},
+    {"WRITE", 0x0A}, {"JMP", 0x0B}, {"CALL", 0x0C},
+    {"RET", 0x0D}, {"BEQ", 0x0E}, {"BNE", 0x0F},
+    {"INT", 0x10}
+};
+
+unordered_map<string, int> instructionOperands = {
+    {"LOAD", 2}, {"ADD", 2}, {"SUB", 2}, {"STORE", 2}, {"NOP", 0},
+    {"AND", 2}, {"OR", 2}, {"XOR", 2}, {"READ", 1}, {"WRITE", 1},
+    {"JMP", 1}, {"CALL", 1}, {"RET", 0}, {"BEQ", 1}, {"BNE", 1}, {"INT", 0}
+};
+
+// Assemble function: Converts instructions into binary format
+vector<bitset<8>> assembleBinary(const vector<string>& assembly) {
+    vector<bitset<8>> machineCodeBinary;
+    machineCodeBinary.reserve(assembly.size() * 3); // Pre-allocate memory for better performance
     for (const auto& line : assembly) {
         auto tokens = tokenize(line);
         if (tokens.empty()) continue;
@@ -50,9 +51,10 @@ vector<uint8_t> assemble(const vector<string>& assembly) {
             continue;
         }
 
-        machineCode.push_back(opcodeMap[tokens[0]]);
-
+        // Convert opcode to binary and add to machine code
+        machineCodeBinary.push_back(bitset<8>(opcodeMap[tokens[0]]));
         int expectedOperands = instructionOperands[tokens[0]];
+
         if (tokens.size() - 1 != expectedOperands) {
             cout << "Error: Incorrect number of operands for " << tokens[0] << endl;
             continue;
@@ -60,203 +62,253 @@ vector<uint8_t> assemble(const vector<string>& assembly) {
 
         try {
             for (size_t i = 1; i < tokens.size(); ++i) {
-                machineCode.push_back(static_cast<uint8_t>(stoi(tokens[i])));
+                machineCodeBinary.push_back(bitset<8>(stoi(tokens[i])));
             }
         } catch (...) {
             cout << "Error: Invalid operand in instruction: " << tokens[0] << endl;
         }
     }
-    return machineCode;
+    return machineCodeBinary;
 }
 
-// ALU Class
-class ALU {
-public:
-    uint8_t add(uint8_t a, uint8_t b) { return (a + b) & 0xFF; }
-    uint8_t sub(uint8_t a, uint8_t b) { return (a - b) & 0xFF; }
-    uint8_t nop() { return 0; }
-    
-    // Logical operations
-    uint8_t andOp(uint8_t a, uint8_t b) { return a & b; }
-    uint8_t orOp(uint8_t a, uint8_t b) { return a | b; }
-    uint8_t xorOp(uint8_t a, uint8_t b) { return a ^ b; }
-};
-
-// Registers Class
-class Registers {
+// Memory class
+class Memory {
 private:
-    uint8_t reg[4]{};
+    bitset<8> mem[256];  // Simulate 256 bytes of memory in binary format
 
 public:
-    void write(int index, uint8_t value) {
-        if (index >= 0 && index < 4)
-            reg[index] = value;
-        else
-            cout << "Error: Invalid register index " << index << endl;
+    void write(uint8_t address, const bitset<8>& value) {
+        if (address < 256) {
+            mem[address] = value;
+        } else {
+            cout << "Error: Invalid memory address " << (int)address << endl;
+        }
     }
 
-    uint8_t read(int index) {
-        if (index >= 0 && index < 4) return reg[index];
-        cout << "Error: Invalid register index " << index << endl;
-        return 0;
+    bitset<8> read(uint8_t address) {
+        if (address < 256) {
+            return mem[address];
+        } else {
+            cout << "Error: Invalid memory address " << (int)address << endl;
+            return bitset<8>(0);
+        }
     }
 
-    void display() {
-        for (int i = 0; i < 4; ++i) {
-            cout << "R" << i << ": " << (int)reg[i] << endl;
+    void displayMemory() {
+        for (int i = 0; i < 256; ++i) {
+            if (mem[i].to_ulong() != 0) {  // Display only non-zero memory locations
+                cout << "Memory[" << i << "]: " << mem[i] << endl;
+            }
         }
     }
 };
 
-// Program Counter Class
-class ProgramCounter {
+// Registers class
+class Register {
 private:
-    uint8_t pc{0};
+    bitset<8> value;  // Store value as binary
 
 public:
-    void increment() { pc = (pc + 1) & 0xFF; }
-    void set(uint8_t address) { pc = address; }
-    uint8_t get() const { return pc; }
+    Register() : value(0) {}
+
+    void load(const bitset<8>& val) { 
+        value = val;
+        }
+    bitset<8> get() const { return value; }
+    void increment() { value = value.to_ulong() + 1; }
+    void decrement() { value = value.to_ulong() - 1; }
 };
 
-// Instruction Register Class
-class InstructionRegister {
-private:
-    uint8_t instruction{0};
-
-public:
-    void load(uint8_t instr) { instruction = instr; }
-    uint8_t get() const { return instruction; }
-};
-
-// CPU Class
+// CPU class
 class CPU {
 private:
-    ALU alu;
-    Registers registers;
-    ProgramCounter pc;
-    InstructionRegister ir;
+    Register pc;   // Program counter (binary)
+    Register ir;   // Instruction register (binary)
+    Register reg[4];  // Four general-purpose registers (binary)
+    Memory memory;
+    stack<uint8_t> callStack;  // Stack for CALL and RET instructions
 
-    void fetchInstruction(const vector<uint8_t>& machineCode) {
-        if (pc.get() < machineCode.size()) {
-            ir.load(machineCode[pc.get()]);
-            pc.increment();
+    void fetchInstruction(const vector<bitset<8>>& machineCode) {
+        if (pc.get().to_ulong() < machineCode.size()) {
+            ir.load(machineCode[pc.get().to_ulong()]);  // Fetch the instruction in binary
         } else {
             cout << "Error: Program counter out of bounds!" << endl;
         }
     }
 
 public:
-    void execute(const vector<uint8_t>& machineCode) {
-        while (pc.get() < machineCode.size()) {
+    void execute(const vector<bitset<8>>& machineCode) {
+        auto start = high_resolution_clock::now(); // Start timer for performance profiling
+        while (pc.get().to_ulong() < machineCode.size()) {
             fetchInstruction(machineCode);
-            uint8_t opcode = ir.get();
+            uint8_t opcode = ir.get().to_ulong();
+            pc.increment();
 
             switch (opcode) {
-                case 0x01: { // LOAD
-                    uint8_t regIndex = machineCode[pc.get()];
-                    uint8_t operand = machineCode[pc.get() + 1];
-                    pc.increment();
-                    pc.increment();
-                    registers.write(regIndex, operand);
-                    break;
-                }
-                case 0x02: { // ADD
-                    uint8_t regIndex = machineCode[pc.get()];
-                    uint8_t operand = machineCode[pc.get() + 1];
-                    pc.increment();
-                    pc.increment();
-                    registers.write(regIndex, alu.add(registers.read(regIndex), operand));
-                    break;
-                }
-                case 0x03: { // SUB
-                    uint8_t regIndex = machineCode[pc.get()];
-                    uint8_t operand = machineCode[pc.get() + 1];
-                    pc.increment();
-                    pc.increment();
-                    registers.write(regIndex, alu.sub(registers.read(regIndex), operand));
-                    break;
-                }
-                case 0x04: { // STORE
-                    uint8_t regIndex = machineCode[pc.get()];
-                    uint8_t addr = machineCode[pc.get() + 1];
-                    pc.increment();
-                    pc.increment();
-                    cout << "STORE R" << (int)regIndex << " value: " << (int)registers.read(regIndex) << " at address " << (int)addr << endl;
-                    break;
-                }
-                case 0x05: // NOP
-                    alu.nop();
-                    break;
-                case 0x06: { // AND
-                    uint8_t regIndex = machineCode[pc.get()];
-                    uint8_t operand = machineCode[pc.get() + 1];
-                    pc.increment();
-                    pc.increment();
-                    registers.write(regIndex, alu.andOp(registers.read(regIndex), operand));
-                    break;
-                }
-                case 0x07: { // OR
-                    uint8_t regIndex = machineCode[pc.get()];
-                    uint8_t operand = machineCode[pc.get() + 1];
-                    pc.increment();
-                    pc.increment();
-                    registers.write(regIndex, alu.orOp(registers.read(regIndex), operand));
-                    break;
-                }
-                case 0x08: { // XOR
-                    uint8_t regIndex = machineCode[pc.get()];
-                    uint8_t operand = machineCode[pc.get() + 1];
-                    pc.increment();
-                    pc.increment();
-                    registers.write(regIndex, alu.xorOp(registers.read(regIndex), operand));
-                    break;
-                }
-                default:
-                    cout << "Unknown opcode: " << (int)opcode << endl;
-                    break;
-            }
-        }
+    case 0x01: {  // LOAD
+        uint8_t regNum = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+        uint8_t value = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+        reg[regNum].load(bitset<8>(value));
+        break;
     }
- 
-    void displayRegisters() { 
-        registers.display();
-         }
+    case 0x04: {  // STORE
+        uint8_t regNum = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+        uint8_t address = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+        memory.write(address, reg[regNum].get());
+        break;
+    }
+    case 0x02: {  // ADD (Binary Addition)
+        uint8_t regNum1 = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+        uint8_t regNum2 = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+
+        // Perform binary addition directly at the bitset level
+        bitset<8> result = reg[regNum1].get() ^ reg[regNum2].get();  // XOR for bitwise sum
+        bitset<8> carry = reg[regNum1].get() & reg[regNum2].get();  // AND for carry bits
+        while (carry.any()) {  // Propagate carry if any
+            bitset<8> newCarry = carry << 1;
+            carry = result & newCarry;
+            result ^= newCarry;
+        }
+
+        reg[regNum1].load(result);
+        break;
+    }
+    case 0x03: {  // SUB (Binary Subtraction)
+        uint8_t regNum1 = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+        uint8_t regNum2 = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+
+        // Perform binary subtraction directly at the bitset level (using 2's complement)
+        bitset<8> result = reg[regNum1].get() ^ (~reg[regNum2].get()) ^ bitset<8>(1);
+        bitset<8> borrow = (~reg[regNum1].get()) & reg[regNum2].get();
+        while (borrow.any()) {  // Propagate borrow if any
+            bitset<8> newBorrow = borrow << 1;
+            borrow = (~result) & newBorrow;
+            result ^= newBorrow;
+        }
+
+        reg[regNum1].load(result);
+        break;
+    }
+    case 0x0A: {  // WRITE
+        uint8_t regNum = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+        cout << "Output: " << reg[regNum].get().to_ulong() << endl;
+        break;
+    }
+    case 0x09: {  // READ
+        uint8_t regNum = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+        int input;
+        cout << "Input: ";
+        cin >> input;
+        reg[regNum].load(bitset<8>(input));
+        break;
+    }
+    case 0x0B: {  // JMP
+        uint8_t address = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+        pc.load(bitset<8>(address));
+        break;
+    }
+    case 0x0C: {  // CALL
+        uint8_t address = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+        callStack.push(pc.get().to_ulong());
+        pc.load(bitset<8>(address));
+        break;
+    }
+    case 0x0D: {  // RET
+        if (!callStack.empty()) {
+            pc.load(bitset<8>(callStack.top()));
+            callStack.pop();
+        } else {
+            cout << "Error: Call stack underflow!" << endl;
+        }
+        break;
+    }
+    case 0x0E: {  // BEQ
+        uint8_t regNum = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+        uint8_t address = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+        if (reg[regNum].get().to_ulong() == 0) {
+            pc.load(bitset<8>(address));
+        }
+        break;
+    }
+    case 0x0F: {  // BNE
+        uint8_t regNum = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+        uint8_t address = machineCode[pc.get().to_ulong()].to_ulong();
+        pc.increment();
+        if (reg[regNum].get().to_ulong() != 0) {
+            pc.load(bitset<8>(address));
+        }
+        break;
+    }
+    case 0x10: {  // INT
+        cout << "Interrupt triggered!" << endl;
+        break;
+    }
+    case 0x00: {  // NOP
+        break;
+    }
+    default:
+        cout << "Error: Unknown opcode " << (int)opcode << endl;
+}
+
+        }
+        auto stop = high_resolution_clock::now(); // Stop timer
+        auto duration = duration_cast<microseconds>(stop - start);
+        cout << "Execution time: " << duration.count() << " microseconds" << endl;
+    }
+
+    void displayState() {
+        cout << "Registers: \n";
+        for (int i = 0; i < 4; ++i) {
+            cout << "R" << i << ": " << reg[i].get() << endl;
+        }
+       // cout << "Program Counter: " << pc.get() << endl;
+        cout << "Memory State: \n";
+        memory.displayMemory();
+    }
 };
 
-// Main Function
 int main() {
+    // Example assembly program
     vector<string> assembly = {
-        "LOAD 0 15         # Load 15 (0b1111) into R0",
-        "LOAD 1 8          # Load 8 (0b1000) into R1",
-        "AND 0 1           # Perform R0 AND R1",
-        "OR 0 1            # Perform R0 OR R1",
-        "XOR 0 1           # Perform R0 XOR R1",
-        "NOP               # No operation",
+        "LOAD 0 15",   // Load 15 into R0
+        "LOAD 1 8",    // Load 8 into R1
+        "ADD 0 1",     // Add R1 to R0
+        "READ 1",      // Input to R1
+        "WRITE 0",     // Output R0
+        "STORE 1 100", // Store R1 at memory address 100
+        "NOP"          // No operation
     };
 
-    vector<uint8_t> machineCode = assemble(assembly);
+    // Assemble the program into binary
+    vector<bitset<8>> machineCode = assembleBinary(assembly);
 
-    cout << "Machine code: ";
-    for (uint8_t byte : machineCode)
-        cout << hex << (int)byte << " ";
+    cout << "Machine code (Binary): \n";
+    for (const auto& byte : machineCode) {
+        cout << byte << " ";
+    }
     cout << endl;
 
-    cout << "Machine code (Decimal): ";
-    for (uint8_t byte : machineCode)
-        cout << dec << (int)byte << " ";
-    cout << endl;
-
-    cout << "Machine code (Binary): ";
-    for (uint8_t byte : machineCode)
-        cout << bitset<8>(byte) << " ";
-    cout << endl;
-
+    // Run the program
     CPU cpu;
     cpu.execute(machineCode);
 
-    cout << "\nRegisters after execution:\n";
-    cpu.displayRegisters();
+    // Display the final state
+    cpu.displayState();
 
     return 0;
 }
