@@ -1,4 +1,4 @@
-##Virtual CPU Emulator:
+Virtual CPU Emulator:
 This project implements a simple 8-bit Virtual CPU Emulator in C++. The emulator supports basic arithmetic operations, memory handling, branching, and I/O. It includes an assembler to convert assembly instructions into binary machine code.
 
 Features:
