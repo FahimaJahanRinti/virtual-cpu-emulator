@@ -1,7 +1,7 @@
-Virtual CPU Emulator:
+#Virtual CPU Emulator:
 This project implements a simple 8-bit Virtual CPU Emulator in C++. The emulator supports basic arithmetic operations, memory handling, branching, and I/O. It includes an assembler to convert assembly instructions into binary machine code.
 
-Features:
+#Features:
 1.Assembler that converts assembly code into machine code.
 2.Memory management with read/write operations.
 3.CPU registers and program counter.
@@ -10,11 +10,11 @@ Features:
 Input/Output operations.
 
 
-1.Example Assembly Code Execution:
+#Example Assembly Code Execution:
 The main function demonstrates assembling and running an assembly program.
 
 
-
+```
 int main() {
 vector<string> assembly = {
 "LOAD 0 15",
@@ -27,21 +27,20 @@ CPU cpu;
 cpu.execute(machineCode);
 return 0;
 }
+```
 
-
-
-Purpose:
+#Purpose:
 1.Loads values into registers.
 2.Performs an addition operation.
 3.Outputs the result using the WRITE instruction.
 
 
 
-2.Tokenization:
+#Tokenization:
 This function tokenizes each line of assembly code into individual components.
 
 
-
+```
 vector<string> tokenize(const string& line) {
 vector<string> tokens;
 stringstream ss(line);
@@ -52,20 +51,20 @@ tokens.push_back(token);
 return tokens;
 }
 
+```
 
-
-Purpose:
+#Purpose:
 1.Splits an assembly instruction into separate words.
 2.Helps in parsing and identifying the instruction and its operands.
 
 
 
 
-3.Opcode and Operand Mapping:
+#Opcode and Operand Mapping:
 Defines the instruction set architecture (ISA) by mapping mnemonics to opcodes and tracking operand counts.
 
 
-
+```
 
 unordered_map<string, uint8_t> opcodeMap = {
 {"LOAD", 0x01}, {"ADD", 0x02}, {"SUB", 0x03},
@@ -77,17 +76,17 @@ unordered_map<string, uint8_t> opcodeMap = {
 };
 
 
-
-Purpose:
+```
+#Purpose:
 1.Maps instruction names to their corresponding opcode values.
 2.Used for assembling code into machine code.
 
 
 
-4.Assembler: Converts Assembly to Machine Code
+#Assembler: Converts Assembly to Machine Code
 The assembleBinary function translates assembly instructions into binary machine code.
 
-
+```
 
 vector<bitset<8>> assembleBinary(const vector<string>& assembly) {
 vector<bitset<8>> machineCodeBinary;
@@ -109,19 +108,19 @@ return machineCodeBinary;
 }
 
 
+```
 
 
-
-Purpose:
+#Purpose:
 1.Converts each instruction into its binary representation.
 2.Ensures proper operand count and handles errors.
 
 
 
-5.Memory Management:
+#Memory Management:
 Defines a Memory class to simulate RAM with read/write operations.
 
-
+```
 
 
 class Memory {
@@ -136,20 +135,20 @@ return mem[address];
 }
 };
 
+```
 
 
-
-Purpose:
+#Purpose:
 1.Stores program instructions and data.
 2.Provides a simple interface for reading and writing memory values.
 
 
 
 
-6.Register Management:
+#Register Management:
 Defines a Register class to store 8-bit values.
 
-
+```
 
 
 class Register {
@@ -160,11 +159,11 @@ void load(const bitset<8>& val) { value = val; }
 bitset<8> get() const { return value; }
 };
 
+```
 
 
 
-
-Purpose:
+#Purpose:
 
 1.Holds values for CPU operations.
 2.Provides methods for loading and retrieving values.
@@ -172,12 +171,12 @@ Purpose:
 
 
 
-7.CPU Execution:
+#CPU Execution:
 Handles the instruction execution cycle (fetch, decode, execute).
 
 
 
-
+```
 
 class CPU {
 private:
@@ -344,11 +343,11 @@ memory.displayMemory();
 };
 
 
+```
 
 
 
-
-Purpose:
+#Purpose:
 1.Simulates the CPU’s fetch-decode-execute cycle.
 2.Executes different instructions like arithmetic, branching, and I/O.
 3.Measures execution time and prints it.
