@@ -2,15 +2,15 @@
 This project implements a simple 8-bit Virtual CPU Emulator in C++. The emulator supports basic arithmetic operations, memory handling, branching, and I/O. It includes an assembler to convert assembly instructions into binary machine code.
 <br><br>
 <h2>Features:</h2><br>
-1.Assembler that converts assembly code into machine code. 
-2.Memory management with read/write operations.  
+1.Assembler that converts assembly code into machine code.  
+2.Memory management with read/write operations.    
 3.CPU registers and program counter.  
 4.Execution of arithmetic and logical instructions.  
 5.Handling of branching, function calls, and stack operations
 Input/Output operations. <br> 
 
 
-<h1>Example Assembly Code Execution:</h1><br>
+<h2>Example Assembly Code Execution:</h2><br>
 The main function demonstrates assembling and running an assembly program.
 
 
@@ -348,7 +348,7 @@ memory.displayMemory();
 
 
 <h2>Purpose:</h2><br>
-1.Simulates the CPU’s fetch-decode-execute cycle.
+1.Simulates the CPU’s fetch-decode-execute cycle.  
 2.Executes different instructions like arithmetic, branching, and I/O.
 3.Measures execution time and prints it.
 4.Displays register values and memory contents.
