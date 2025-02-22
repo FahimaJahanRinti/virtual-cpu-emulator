@@ -1,7 +1,7 @@
 <h1>Virtual CPU Emulator:</h1><br>
 This project implements a simple 8-bit Virtual CPU Emulator in C++. The emulator supports basic arithmetic operations, memory handling, branching, and I/O. It includes an assembler to convert assembly instructions into binary machine code.
 <br><br>
-<h2>Features:</h2><br>
+<h2>Features:</h2><br><br>
 1.Assembler that converts assembly code into machine code.  
 2.Memory management with read/write operations.    
 3.CPU registers and program counter.  
@@ -29,7 +29,7 @@ return 0;
 }
 ```
 
-<h2>Purpose:</h2><br>
+<h2>Purpose:</h2><br><br>
 1.Loads values into registers.
 2.Performs an addition operation.
 3.Outputs the result using the WRITE instruction.<br>
@@ -53,7 +53,7 @@ return tokens;
 
 ```
 
-<h2>Purpose:</h2><br>
+<h2>Purpose:</h2><br><br>
 1.Splits an assembly instruction into separate words.
 2.Helps in parsing and identifying the instruction and its operands.<br>
 
@@ -77,7 +77,7 @@ unordered_map<string, uint8_t> opcodeMap = {
 
 
 ```
-<h2>Purpose:</h2><br>
+<h2>Purpose:</h2><br><br>
 1.Maps instruction names to their corresponding opcode values.
 2.Used for assembling code into machine code.<br>
 
@@ -111,7 +111,7 @@ return machineCodeBinary;
 ```
 
 
-<h2>Purpose:</h2><br>
+<h2>Purpose:</h2><br><br>
 1.Converts each instruction into its binary representation.
 2.Ensures proper operand count and handles errors.<br>
 
@@ -138,14 +138,14 @@ return mem[address];
 ```
 
 
-<h1>Purpose:</h1><br>
+<h1>Purpose:</h1><br><br>
 1.Stores program instructions and data.
 2.Provides a simple interface for reading and writing memory values.<br>
 
 
 
 
-<h1>Register Management:</h1><br>
+<h2>Register Management:</h2><br>
 Defines a Register class to store 8-bit values.
 
 ```
@@ -163,7 +163,7 @@ bitset<8> get() const { return value; }
 
 
 
-<h2>Purpose:</h2><br>
+<h2>Purpose:</h2><br><br>
 
 1.Holds values for CPU operations.
 2.Provides methods for loading and retrieving values.<br>
@@ -347,7 +347,7 @@ memory.displayMemory();
 
 
 
-<h2>Purpose:</h2><br>
+<h2>Purpose:</h2><br><br>
 1.Simulates the CPU’s fetch-decode-execute cycle.  
 2.Executes different instructions like arithmetic, branching, and I/O.
 3.Measures execution time and prints it.
